@@ -1,7 +1,7 @@
 import "server-only";
 import { and, desc, eq } from "drizzle-orm";
 import type { WorkspaceData } from "@/types/workspace";
-import type { Session } from "../auth/session";
+import type { FirmSession } from "../auth/session";
 import { getDb } from "../db/client";
 import {
   activity,
@@ -25,7 +25,7 @@ export class InputError extends Error {}
 // Every query is scoped to the session's firm. Never take a firm ID from the
 // request body.
 export async function loadWorkspace(
-  session: Session,
+  session: FirmSession,
   now = new Date(),
 ): Promise<WorkspaceData> {
   const db = getDb();
@@ -135,7 +135,7 @@ export async function loadWorkspace(
   };
 }
 
-export async function createRecord(session: Session, input: RecordInput) {
+export async function createRecord(session: FirmSession, input: RecordInput) {
   const { firmId, userId } = session;
   await getDb().transaction(async (tx) => {
     const log = (action: string, subject: string) =>
@@ -177,7 +177,7 @@ export async function createRecord(session: Session, input: RecordInput) {
 }
 
 export async function saveTime(
-  session: Session,
+  session: FirmSession,
   input: { project: string; seconds: number },
 ) {
   const { firmId, userId } = session;

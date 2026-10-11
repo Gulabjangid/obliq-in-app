@@ -1,17 +1,24 @@
 import "server-only";
 import { ZodError } from "zod";
-import { getSession, type Session } from "./auth/session";
+import { getSession, hasFirm, type FirmSession } from "./auth/session";
 import { InputError } from "./workspace/service";
 
-type Handler = (session: Session, request: Request) => Promise<unknown>;
+type Handler = (session: FirmSession, request: Request) => Promise<unknown>;
 
 // Wraps a route handler with the session check and consistent JSON errors.
+// Signed-in users without a firm get 403 so the client can send them to
+// onboarding (#11) instead of the login page.
 export function route(handler: Handler, status = 200) {
   return async (request: Request) => {
     try {
       const session = await getSession();
       if (!session)
         return Response.json({ error: "Not signed in" }, { status: 401 });
+      if (!hasFirm(session))
+        return Response.json(
+          { error: "Finish onboarding", code: "onboarding_required" },
+          { status: 403 },
+        );
       return Response.json(await handler(session, request), { status });
     } catch (error) {
       if (error instanceof ZodError)

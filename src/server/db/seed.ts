@@ -1,6 +1,6 @@
 // Creates a development firm from the design fixtures for DEV_AUTH_ID.
 // Run with `npm run db:seed`. Skips if the user already exists.
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import { dashboard } from "../../data/dashboard.ts";
@@ -16,9 +16,14 @@ const connection = postgres(DATABASE_URL, { max: 1 });
 const db = drizzle(connection, { schema });
 
 const [existing] = await db
-  .select({ id: schema.users.id })
-  .from(schema.users)
-  .where(eq(schema.users.authId, DEV_AUTH_ID));
+  .select({ id: schema.userIdentities.userId })
+  .from(schema.userIdentities)
+  .where(
+    and(
+      eq(schema.userIdentities.provider, "dev"),
+      eq(schema.userIdentities.providerUserId, DEV_AUTH_ID),
+    ),
+  );
 
 if (existing) {
   console.log(`Seed skipped: ${DEV_AUTH_ID} already exists.`);
@@ -27,13 +32,17 @@ if (existing) {
     const [user] = await tx
       .insert(schema.users)
       .values({
-        authId: DEV_AUTH_ID,
         email: "naman@example.com",
         name: dashboard.user.firstName,
         type: "firm",
         onboardedAt: new Date(),
       })
       .returning();
+    await tx.insert(schema.userIdentities).values({
+      provider: "dev",
+      providerUserId: DEV_AUTH_ID,
+      userId: user.id,
+    });
     const [firm] = await tx
       .insert(schema.firms)
       .values({ name: "OBLIQ Demo Firm", createdBy: user.id })

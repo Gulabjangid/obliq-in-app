@@ -99,7 +99,7 @@ A request goes through three layers:
 
 ### Data model
 
-`users` hold the Auth0 ID (`auth_id`), the user type (client or firm, set by onboarding in #11), and when onboarding finished. A `firm_members` row links a user to a firm with the role `owner` or `article_assistant`. `firm_invites` hold the codes owners give assistants (#12).
+`users` hold the email (unique, ignoring case), the user type (client or firm, set by onboarding in #11), and when onboarding finished. How a user signs in lives in `user_identities` (`provider`, `provider_user_id`), so Auth0 (#10) can later be replaced by passwords without changing `users`. A `firm_members` row links a user to a firm with the role `owner` or `article_assistant`. `firm_invites` hold the codes owners give assistants (#12).
 
 Every other table has a `firm_id`, and the service takes it from the session, never from the request. Records link to clients and projects by ID. Statuses and document types are Postgres enums whose values match the strings the screens filter on. Activity stores a user ID and a timestamp; the label ("You", "2 hours ago") is worked out when it is read. Dates use India time.
 
@@ -107,7 +107,7 @@ The screens still send client and project names (see #7). The service looks them
 
 ### Sessions
 
-`getSession()` in `src/server/auth/session.ts` is the only place that knows who is signed in. Until Auth0 is added (#10), development uses the user named by `DEV_AUTH_ID`, and production returns no session, so the workspace routes return 401. Auth0 replaces the body of `getSession()`; routes and services do not change.
+`getSession()` in `src/server/auth/session.ts` is the only place that knows who is signed in. Until Auth0 is added (#10), development uses the `dev` identity named by `DEV_AUTH_ID`, and production returns no session, so the workspace routes return 401. A signed-in user who has no firm yet gets a session with `firmId: null`, and the workspace routes return 403 with `code: "onboarding_required"` so the client can send them to onboarding (#11). Auth0 calls `findSession("auth0", sub)` from `getSession()`; routes and services do not change.
 
 ### Adding an endpoint
 

@@ -98,15 +98,21 @@ CREATE TABLE "time_entries" (
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
+CREATE TABLE "user_identities" (
+	"provider" text NOT NULL,
+	"provider_user_id" text NOT NULL,
+	"user_id" uuid NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "user_identities_provider_provider_user_id_pk" PRIMARY KEY("provider","provider_user_id")
+);
+--> statement-breakpoint
 CREATE TABLE "users" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"auth_id" text NOT NULL,
 	"email" text NOT NULL,
 	"name" text NOT NULL,
 	"type" "user_type",
 	"onboarded_at" timestamp with time zone,
-	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
-	CONSTRAINT "users_auth_id_unique" UNIQUE("auth_id")
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 ALTER TABLE "activity" ADD CONSTRAINT "activity_firm_id_firms_id_fk" FOREIGN KEY ("firm_id") REFERENCES "public"."firms"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
@@ -126,9 +132,13 @@ ALTER TABLE "projects" ADD CONSTRAINT "projects_client_id_clients_id_fk" FOREIGN
 ALTER TABLE "time_entries" ADD CONSTRAINT "time_entries_firm_id_firms_id_fk" FOREIGN KEY ("firm_id") REFERENCES "public"."firms"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "time_entries" ADD CONSTRAINT "time_entries_project_id_projects_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."projects"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "time_entries" ADD CONSTRAINT "time_entries_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "user_identities" ADD CONSTRAINT "user_identities_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 CREATE INDEX "activity_firm_idx" ON "activity" USING btree ("firm_id","created_at");--> statement-breakpoint
 CREATE INDEX "clients_firm_idx" ON "clients" USING btree ("firm_id");--> statement-breakpoint
 CREATE INDEX "documents_firm_idx" ON "documents" USING btree ("firm_id");--> statement-breakpoint
+CREATE INDEX "firm_members_user_idx" ON "firm_members" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "invoices_firm_idx" ON "invoices" USING btree ("firm_id");--> statement-breakpoint
 CREATE INDEX "projects_firm_idx" ON "projects" USING btree ("firm_id");--> statement-breakpoint
-CREATE INDEX "time_entries_firm_idx" ON "time_entries" USING btree ("firm_id");
+CREATE INDEX "time_entries_firm_idx" ON "time_entries" USING btree ("firm_id");--> statement-breakpoint
+CREATE INDEX "user_identities_user_idx" ON "user_identities" USING btree ("user_id");--> statement-breakpoint
+CREATE UNIQUE INDEX "users_email_idx" ON "users" USING btree (lower("email"));
