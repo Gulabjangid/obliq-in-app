@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import {
   date,
   index,
@@ -8,6 +9,7 @@ import {
   primaryKey,
   text,
   timestamp,
+  uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
 
@@ -53,17 +55,39 @@ const firmId = () =>
     .notNull()
     .references(() => firms.id, { onDelete: "cascade" });
 
-export const users = pgTable("users", {
-  id: id(),
-  // Auth0 `sub` claim. Set when the user first signs in (#10).
-  authId: text("auth_id").notNull().unique(),
-  email: text("email").notNull(),
-  name: text("name").notNull(),
-  // Null until onboarding asks whether the user is a client or a firm (#11).
-  type: userType("type"),
-  onboardedAt: timestamp("onboarded_at", { withTimezone: true }),
-  createdAt: createdAt(),
-});
+export const users = pgTable(
+  "users",
+  {
+    id: id(),
+    email: text("email").notNull(),
+    name: text("name").notNull(),
+    // Null until onboarding asks whether the user is a client or a firm (#11).
+    type: userType("type"),
+    onboardedAt: timestamp("onboarded_at", { withTimezone: true }),
+    createdAt: createdAt(),
+  },
+  // One account per email, however it is capitalised.
+  (table) => [uniqueIndex("users_email_idx").on(sql`lower(${table.email})`)],
+);
+
+// How a user signs in, kept apart from `users` so the login provider can
+// change without touching accounts: Auth0 now (#10), passwords later.
+export const userIdentities = pgTable(
+  "user_identities",
+  {
+    provider: text("provider").notNull(),
+    // The provider's ID for the user, e.g. the Auth0 `sub` claim.
+    providerUserId: text("provider_user_id").notNull(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    createdAt: createdAt(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.provider, table.providerUserId] }),
+    index("user_identities_user_idx").on(table.userId),
+  ],
+);
 
 export const firms = pgTable("firms", {
   id: id(),
@@ -86,7 +110,11 @@ export const firmMembers = pgTable(
       .notNull()
       .defaultNow(),
   },
-  (table) => [primaryKey({ columns: [table.firmId, table.userId] })],
+  (table) => [
+    primaryKey({ columns: [table.firmId, table.userId] }),
+    // getSession() looks members up by user on every request.
+    index("firm_members_user_idx").on(table.userId),
+  ],
 );
 
 // Codes an owner gives article assistants to join the firm (#12).
