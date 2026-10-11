@@ -103,7 +103,7 @@ A request goes through three layers:
 
 Every other table has a `firm_id`, and the service takes it from the session, never from the request. Records link to clients and projects by ID. Statuses and document types are Postgres enums whose values match the strings the screens filter on. Activity stores a user ID and a timestamp; the label ("You", "2 hours ago") is worked out when it is read. Dates use India time.
 
-The screens still send client and project names (see #7). The service looks them up within the firm and returns 400 for an unknown name. When the forms send IDs, change `input.ts` and the two lookups in `service.ts`.
+Forms send `clientId` and the timer sends `projectId` (#23). The service looks the ID up within the session's firm and returns 400 if it isn't found, so an ID from another firm looks the same as one that doesn't exist. Names are for display only. Client names are unique within a firm and project names within a client, both ignoring case; a duplicate returns 409 with a message the form shows.
 
 ### Sessions
 

@@ -142,7 +142,14 @@ export const clients = pgTable(
     status: clientStatus("status").notNull().default("Active"),
     createdAt: createdAt(),
   },
-  (table) => [index("clients_firm_idx").on(table.firmId)],
+  (table) => [
+    index("clients_firm_idx").on(table.firmId),
+    // Client names are how people tell clients apart in lists and forms.
+    uniqueIndex("clients_firm_name_idx").on(
+      table.firmId,
+      sql`lower(${table.name})`,
+    ),
+  ],
 );
 
 export const projects = pgTable(
@@ -161,7 +168,14 @@ export const projects = pgTable(
     category: text("category").notNull().default("General"),
     createdAt: createdAt(),
   },
-  (table) => [index("projects_firm_idx").on(table.firmId)],
+  (table) => [
+    index("projects_firm_idx").on(table.firmId),
+    // Two clients may each have an "Annual audit"; one client may not.
+    uniqueIndex("projects_client_name_idx").on(
+      table.clientId,
+      sql`lower(${table.name})`,
+    ),
+  ],
 );
 
 export const invoices = pgTable(
