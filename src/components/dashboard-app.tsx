@@ -258,6 +258,7 @@ export default function DashboardApp({ children }: { children: ReactNode }) {
             projects={projects}
             invoices={invoices}
             activity={activity}
+            entries={entries}
             period={period}
             setPeriod={setPeriod}
             openModal={setModal}

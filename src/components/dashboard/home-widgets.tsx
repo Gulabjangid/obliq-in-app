@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { dashboard } from "@/data/dashboard";
 import { initials } from "@/lib/format";
+import { formatRelativeTime } from "@/lib/format";
 import type { Route } from "@/lib/routes";
 import type { ActivityItem, ModalKind, TeamMember } from "@/types/workspace";
 
@@ -65,8 +66,10 @@ const metricIcons = {
 
 export function MetricCard({
   metric,
+  value,
 }: {
   metric: (typeof dashboard.metrics)[number];
+  value: string;
 }) {
   const Icon = metricIcons[metric.icon];
   return (
@@ -78,8 +81,7 @@ export function MetricCard({
         <span>{metric.label}</span>
       </div>
       <div className="metric-bottom">
-        <strong>{metric.value}</strong>
-        <span className={`metric-change ${metric.trend}`}>{metric.change}</span>
+        <strong>{value}</strong>
       </div>
     </article>
   );
@@ -97,7 +99,9 @@ export function ActivityList({ activity }: { activity: ActivityItem[] }) {
             <p>
               <strong>{item.person}</strong> {item.action} <b>{item.subject}</b>
             </p>
-            <small>{item.time}</small>
+            <small>
+              {item.createdAt ? formatRelativeTime(item.createdAt) : item.time}
+            </small>
           </div>
         </div>
       ))}

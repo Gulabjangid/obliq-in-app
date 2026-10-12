@@ -87,6 +87,7 @@ export const validActivity = records<ActivityItem>({
   action: "string",
   subject: "string",
   time: "string",
+  createdAt: "optional-string",
   type: "string",
 });
 export const validTimeEntries = records<TimeEntry>({

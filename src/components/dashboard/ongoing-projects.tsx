@@ -1,7 +1,7 @@
 import { ChevronDown } from "lucide-react";
 import { Avatar } from "@/components/dashboard/home-widgets";
 import type { SelectProject } from "@/components/dashboard/contracts";
-import { formatDate } from "@/lib/format";
+import { formatDate, isOverdueDate, parseDate, todayISO } from "@/lib/format";
 import type { Project } from "@/types/workspace";
 
 const groups = [
@@ -11,6 +11,11 @@ const groups = [
     statuses: ["Planning", "In progress"],
   },
   { title: "In Review", tone: "review", statuses: ["Review"] },
+  {
+    title: "Overdue",
+    tone: "overdue",
+    statuses: ["Planning", "In progress", "Review"],
+  },
 ];
 
 // The home table: open work grouped by stage, like the dashboard design.
@@ -22,12 +27,24 @@ export function OngoingProjects({
   projects: Project[];
   onSelect: SelectProject;
 }) {
+  const today = todayISO();
   return (
     <div className="ongoing">
       {groups.map((group) => {
         const rows = projects
-          .filter((item) => group.statuses.includes(item.status))
-          .sort((a, b) => a.due.localeCompare(b.due));
+          .filter((item) => {
+            if (!group.statuses.includes(item.status)) return false;
+            return group.title === "Overdue"
+              ? isOverdueDate(item.due, today)
+              : !isOverdueDate(item.due, today);
+          })
+          .sort((a, b) => {
+            const first =
+              parseDate(a.due)?.getTime() ?? Number.MAX_SAFE_INTEGER;
+            const second =
+              parseDate(b.due)?.getTime() ?? Number.MAX_SAFE_INTEGER;
+            return first - second;
+          });
         return (
           <details key={group.title} className="ongoing-group" open>
             <summary className={`ongoing-summary ${group.tone}`}>

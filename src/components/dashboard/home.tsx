@@ -10,17 +10,24 @@ import {
 import { EarningsChart } from "@/components/dashboard/earnings-chart";
 import { OngoingProjects } from "@/components/dashboard/ongoing-projects";
 import { SectionHeader } from "@/components/dashboard/ui";
+import { getHomeMetricValues } from "@/lib/dashboard-metrics";
 import type {
   Navigate,
   OpenModal,
   SelectProject,
 } from "@/components/dashboard/contracts";
-import type { ActivityItem, Invoice, Project } from "@/types/workspace";
+import type {
+  ActivityItem,
+  Invoice,
+  Project,
+  TimeEntry,
+} from "@/types/workspace";
 
 export function HomePage({
   projects,
   invoices,
   activity,
+  entries,
   period,
   setPeriod,
   openModal,
@@ -30,25 +37,26 @@ export function HomePage({
   projects: Project[];
   invoices: Invoice[];
   activity: ActivityItem[];
+  entries: TimeEntry[];
   period: string;
   setPeriod: Dispatch<SetStateAction<string>>;
   openModal: OpenModal;
   navigate: Navigate;
   selectProject: SelectProject;
 }) {
-  const metrics = dashboard.metrics.map((metric) =>
-    metric.id === "total"
-      ? {
-          ...metric,
-          value: String(456 + projects.length - dashboard.projects.length),
-        }
-      : metric,
-  );
+  const metricValues = getHomeMetricValues(projects, entries);
+  const awaitingInvoiceCount = invoices.filter(
+    (item) => item.status === "Awaiting payment",
+  ).length;
   return (
     <div className="dashboard-content">
       <section className="metrics" aria-label="Project summary">
-        {metrics.map((metric) => (
-          <MetricCard key={metric.id} metric={metric} />
+        {dashboard.metrics.map((metric) => (
+          <MetricCard
+            key={metric.id}
+            metric={metric}
+            value={metricValues[metric.id] ?? "0"}
+          />
         ))}
       </section>
       <div className="lower-grid">
@@ -102,11 +110,8 @@ export function HomePage({
           </span>
           <span>
             <strong>
-              {
-                invoices.filter((item) => item.status === "Awaiting payment")
-                  .length
-              }{" "}
-              invoices awaiting payment
+              {awaitingInvoiceCount} invoice
+              {awaitingInvoiceCount === 1 ? "" : "s"} awaiting payment
             </strong>
           </span>
         </div>
