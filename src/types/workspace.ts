@@ -1,9 +1,6 @@
 export type Metric = {
   id: string;
   label: string;
-  value: string;
-  change: string;
-  trend: "up" | "down";
   icon: "briefcase" | "edit" | "calendar" | "clock";
 };
 
@@ -62,6 +59,7 @@ export type ActivityItem = {
   action: string;
   subject: string;
   time: string;
+  createdAt?: string;
   type: string;
 };
 

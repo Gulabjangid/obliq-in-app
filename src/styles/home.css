@@ -288,6 +288,10 @@
 .ongoing-summary.review {
   background: #fbf6e6;
 }
+.ongoing-summary.overdue {
+  background: #fff0ee;
+  color: #a43f35;
+}
 .ongoing-group:not([open]) .ongoing-summary svg {
   transform: rotate(-90deg);
 }
@@ -312,6 +316,9 @@
 }
 .ongoing-table tr.row-review td:first-child {
   box-shadow: inset 3px 0 0 #e2a63b;
+}
+.ongoing-table tr.row-overdue td:first-child {
+  box-shadow: inset 3px 0 0 #d98176;
 }
 /* Conventional colours: High is red, Medium amber, Low green. */
 .priority {
