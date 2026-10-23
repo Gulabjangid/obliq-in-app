@@ -48,7 +48,7 @@ const finish = () => {
 // Signal interruption and fatal error handling
 const handleSignal = (signal) => {
   exitCode = signal === "SIGINT" ? 130 : 143;
-  console.error(`\n[Test Runner] Interrupted by ${signal}.`);
+  console.error(`\x1b[31m\n[Test Runner] Interrupted by ${signal}.\x1b[0m`);
   testStream.destroy();
 };
 
