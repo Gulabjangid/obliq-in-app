@@ -18,6 +18,7 @@ v1-api:
           - src/app/api/**
           - src/server/**
           - drizzle/**
+          - .github/**
 
 v1-storage:
   - changed-files:
