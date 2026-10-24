@@ -20,6 +20,20 @@ export type Project = {
   team?: string[];
 };
 
+export type UserRole = "Owner" | "Reviewer / Senior" | "Article / Preparer";
+
+export type UserProfile = {
+  id: string;
+  name: string;
+  firstName: string;
+  role: UserRole;
+  firmName: string;
+  email?: string;
+  membershipNo?: string;
+  phone?: string;
+  isCustomized: boolean;
+};
+
 export type TeamMember = {
   id: string;
   name: string;
