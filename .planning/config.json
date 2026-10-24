@@ -1,0 +1,13 @@
+{
+  "project_name": "obliq-in-app",
+  "version": "0.1.0",
+  "mode": "interactive",
+  "model_profile": "balanced",
+  "workflow": {
+    "auto_advance": false,
+    "require_plan_review": false,
+    "enforce_conventional_commits": true,
+    "test_command": "npm test",
+    "check_command": "npm run check"
+  }
+}
