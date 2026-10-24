@@ -14,7 +14,7 @@
     "typecheck": "tsc --noEmit",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "test:db": "node --conditions=react-server --test tests/integration/invitations.test.mjs",
+    "test:db": "node --conditions=react-server --test \"tests/integration/**/*.test.mjs\"",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:seed": "node --env-file=.env src/server/db/seed.ts",
