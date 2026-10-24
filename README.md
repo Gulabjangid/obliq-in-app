@@ -54,3 +54,7 @@ Headline metrics and earnings use design fixtures. The timer remembers its proje
 `WorkspaceSource` defines async `load`, `create`, and `saveTime` methods. `src/lib/workspace-source.ts` exports the browser or API implementation; the screens access it through `useWorkspace`. Forms await successful saves, prevent repeat submissions while saving, and keep input when a request fails. Loading failures have a Retry action; failed time saves retain the duration for retry. Email delivery is not implemented.
 
 See [the LLD](docs/lld.md) for the file structure, adapter contract, and backend layout.
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for branches, commits, pull requests, and labels.
