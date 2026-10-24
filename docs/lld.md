@@ -1,16 +1,14 @@
-# Dashboard v1 LLD
+# Dashboard LLD
 
 ## File responsibilities
 
 ```text
 src/
   app/
-    layout.tsx              HTML shell and default metadata
-    (dashboard)/
-      layout.tsx            Persistent dashboard instance
-      page.tsx              Home route
-      [section]/page.tsx    Section validation and 404 handling
-    login/page.tsx          Login and sign-up links, outside the dashboard
+    layout.tsx              Persistent dashboard instance and page metadata
+    page.tsx                Home route
+    [section]/page.tsx      Section validation and 404 handling
+    api/                    Route handlers: health, workspace, records, time
     globals.css             Stylesheet imports
   middleware.ts             Auth0 routes and redirect to /login when login is on
   components/
@@ -33,7 +31,8 @@ src/
     routes.ts               Route names, labels, and URL helper
     format.ts               Money, date, and duration formatting
     storage-validation.ts  Runtime checks for stored record fields
-    workspace-source.ts    Async data source and local browser implementation
+    workspace-source.ts    Async data source, browser implementation, source switch
+    api-workspace-source.ts WorkspaceSource that calls /api/workspace
     use-workspace.ts        Workspace state, loading, and request results
     timer-state.ts          Timer snapshot validation, persistence, and duration
     use-timer.ts            Selected project and running or stopped session
@@ -42,9 +41,24 @@ src/
     auth/auth0.ts           Auth0 client, created on first use
     auth/session.ts         Signed-in user as a provider-neutral AuthUser
   styles/                   Base, shell, home, shared UI, pages, dialogs, breakpoints
+  server/                   Server code; never import it from a client component
+    http.ts                 Session check and JSON errors for route handlers
+    auth/session.ts         Current user and firm (development stub until #10)
+    db/client.ts            Lazy Postgres connection pool
+    db/schema.ts            Tables and enums; source for drizzle/*.sql
+    db/seed.ts              Demo firm from the design fixtures
+    workspace/input.ts      Request validation for each record kind
+    workspace/mappers.ts    Database rows to frontend records
+    workspace/service.ts    Firm-scoped queries and writes
+drizzle/                    Generated SQL migrations; commit with schema changes
 tests/
-  storage-validation.test.mjs
-  workspace-source.test.mjs
+  client/                   Browser-side state; run with npm run test:client
+    timer-state.test.mjs
+  server/                   Data, validation, and API; run with npm run test:server
+    api-workspace-source.test.mjs
+    storage-validation.test.mjs
+    workspace-input.test.mjs
+    workspace-source.test.mjs
 ```
 
 The root layout keeps the dashboard mounted across routes. Route pages validate the URL; the dashboard selects the corresponding screen from the pathname. Unknown sections render Next.js's 404 page. This lets the v1 timer continue during navigation without a context provider or state library.
@@ -61,7 +75,7 @@ The timer stores its selected project and session in `obliq-preview-timer-v1`. A
 
 Add its route in `routes.ts`, its icon in `sidebar.tsx`, and its component under `dashboard/pages`. Add its render branch in `dashboard-app.tsx`. Keep screen-specific state in that screen. Put a shared component in `ui.tsx` only when more than one screen needs it.
 
-## Backend integration
+## Backend
 
 The source contract is defined in `src/types/workspace.ts`:
 
@@ -73,16 +87,54 @@ type WorkspaceSource = {
 };
 ```
 
-To connect an API, implement these methods and export that implementation as `workspaceSource`. The hook also accepts a source argument for testing. The screens and forms use the same callbacks.
+`NEXT_PUBLIC_WORKSPACE_SOURCE=api` selects `createApiWorkspace`, which calls these routes. Each returns the full `WorkspaceData`, so the screens stay unchanged.
 
-- `load` fetches and validates the workspace collections. Map backend field names and status values to the frontend record types.
-- `create` sends the relevant fields for the selected kind and returns the updated workspace. Use server-issued IDs and server validation; local IDs belong only to the browser implementation.
-- `saveTime` sends the project and duration, then returns the updated records. Throw on a failed request so the duration remains available for retry.
-- Authentication must follow the backend's contract. Keep credentials on the server and never put secrets in `NEXT_PUBLIC_*` variables.
+| Method     | Route                         | Body                   | Service         |
+| ---------- | ----------------------------- | ---------------------- | --------------- |
+| `load`     | `GET /api/workspace`          |                        | `loadWorkspace` |
+| `create`   | `POST /api/workspace/records` | `{ kind, values }`     | `createRecord`  |
+| `saveTime` | `POST /api/workspace/time`    | `{ project, seconds }` | `saveTime`      |
 
-The current `main` branch has no endpoints or authentication contract. This PR does not assume endpoint paths, a database, or a session mechanism. For v1 the source returns a workspace snapshot. When collections become large, fetch and paginate them by screen rather than loading every record.
+A request goes through three layers:
 
-When records come from the server, fetch initial data in route pages and move the corresponding screen rendering there. Keep timer and navigation state in the shared layout. Do not import credentials or server modules into a client hook.
+1. The route file in `src/app/api` wraps its handler in `route()` from `src/server/http.ts`. `route()` loads the session, returns 401 without one, and turns validation errors into 400 responses.
+2. The handler parses the body with a Zod schema from `workspace/input.ts`. Each record kind accepts only the fields its form shows.
+3. The service runs firm-scoped queries in `workspace/service.ts` and maps rows to frontend records in `workspace/mappers.ts`.
+
+### Data model
+
+`users` hold the email (unique, ignoring case), the user type (client or firm, set by onboarding in #11), and when onboarding finished. How a user signs in lives in `user_identities` (`provider`, `provider_user_id`), so Auth0 (#10) can later be replaced by passwords without changing `users`. A `firm_members` row links a user to a firm with an internal role (`owner`, `article_assistant`, or `reviewer`). `firm_invites` store invitation-code hashes and expiry, revocation, and acceptance metadata (#12). Role naming and the full permission matrix are coordinated in #29.
+
+Every other table has a `firm_id`, and the service takes it from the session, never from the request. Records link to clients and projects by ID. Statuses and document types are Postgres enums whose values match the strings the screens filter on. Activity stores a user ID and a timestamp; the label ("You", "2 hours ago") is worked out when it is read. Dates use India time.
+
+The screens still send client and project names (see #7). The service looks them up within the firm and returns 400 for an unknown name. When the forms send IDs, change `input.ts` and the two lookups in `service.ts`.
+
+### Sessions
+
+`getSession()` in `src/server/auth/session.ts` is the only place that knows who is signed in. Until Auth0 is added (#10), development uses the `dev` identity named by `DEV_AUTH_ID`, and production returns no session, so the workspace routes return 401. A signed-in user who has no firm yet gets a session with `firmId: null`, and the workspace routes return 403 with `code: "onboarding_required"` so the client can send them to onboarding (#11). Auth0 calls `findSession("auth0", sub)` from `getSession()`; routes and services do not change.
+
+### Firm invitations
+
+The invitation API and transaction rules are documented in [firm-invitations.md](firm-invitations.md).
+Owner GET/POST/DELETE operations under `/api/firm/invitations` use the shared
+session and require current owner membership in its firm. `/api/invitations/redeem`
+accepts the shared signed-in session even before firm membership exists; the
+invitation determines the target firm and role. The internal user UUID remains
+independent of its login provider.
+
+`npm test` runs the non-database suites through the shared runner. PostgreSQL
+integration tests run separately with `npm run test:db`, using a disposable test
+database and the server runtime. CI executes both suites. This keeps database
+setup and Next server startup out of the concurrent unit-test pass.
+
+### Adding an endpoint
+
+1. Add the input schema to `src/server/<area>/input.ts` and the queries to `service.ts`. Filter every query by `session.firmId`.
+2. Add `src/app/api/<area>/route.ts` that exports `GET` or `POST = route(...)`.
+3. Change the schema only in `db/schema.ts`, then run `npm run db:generate` and commit the SQL file.
+4. Add tests for input and mapping. They run without a database.
+
+Keep credentials on the server and never put secrets in `NEXT_PUBLIC_*` variables. The database client, session, route helper, and services import `server-only`, so importing them from a client component fails the build. When collections become large, fetch and paginate them by screen rather than loading every record.
 
 ## Login
 
