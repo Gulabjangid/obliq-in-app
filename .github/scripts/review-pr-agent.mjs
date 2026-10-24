@@ -94,7 +94,13 @@ async function removeLabel(label) {
 }
 
 async function callGemini(prompt) {
-  const models = ["gemini-2.5-flash", "gemini-1.5-flash"];
+  const models = [
+    "gemini-3.8-flash",
+    "gemini-3.7-flash",
+    "gemini-3.5-flash-lite",
+    "gemini-2.5-flash",
+    "gemini-2.0-flash",
+  ];
 
   for (const model of models) {
     try {
@@ -250,8 +256,17 @@ If no label adjustments are necessary, provide:
   console.log("PR review completed successfully.");
 }
 
-run().catch((err) => {
+run().catch(async (err) => {
   console.error("AI PR Review Agent encountered an error:", err);
+  try {
+    if (GITHUB_TOKEN && GITHUB_REPOSITORY && PR_NUMBER) {
+      await postComment(
+        `### 🤖 OBLIQ AI Architectural Review Agent\n\n> [!WARNING]\n> **Review Notice**: The automated architectural review could not be completed: \`${err.message || String(err)}\`\n\n*Check the GitHub Actions workflow logs for full diagnostic details.*`,
+      );
+    }
+  } catch (commentErr) {
+    console.warn("Could not post failure notice comment:", commentErr.message);
+  }
   // Do not fail the workflow if AI review fails (e.g. rate limit), keep build green
   process.exit(0);
 });

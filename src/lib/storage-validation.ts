@@ -5,6 +5,7 @@ import type {
   Invoice,
   Project,
   TimeEntry,
+  UserProfile,
 } from "@/types/workspace";
 
 type FieldType =
@@ -96,3 +97,26 @@ export const validTimeEntries = records<TimeEntry>({
   project: "string",
   seconds: "number",
 });
+
+export function validUserProfile(value: unknown): value is UserProfile {
+  if (value === null || typeof value !== "object") return false;
+  const item = value as Record<string, unknown>;
+  const allowedRoles = ["Owner", "Reviewer / Senior", "Article / Preparer"];
+  return (
+    typeof item.id === "string" &&
+    item.id.trim().length > 0 &&
+    typeof item.name === "string" &&
+    item.name.trim().length > 0 &&
+    typeof item.firstName === "string" &&
+    item.firstName.trim().length > 0 &&
+    typeof item.role === "string" &&
+    allowedRoles.includes(item.role) &&
+    typeof item.firmName === "string" &&
+    item.firmName.trim().length > 0 &&
+    (item.email === undefined || typeof item.email === "string") &&
+    (item.membershipNo === undefined ||
+      typeof item.membershipNo === "string") &&
+    (item.phone === undefined || typeof item.phone === "string") &&
+    (item.isCustomized === undefined || typeof item.isCustomized === "boolean")
+  );
+}

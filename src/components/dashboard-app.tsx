@@ -12,9 +12,9 @@ import {
   Tags,
   X,
 } from "lucide-react";
-import { dashboard } from "@/data/dashboard";
 import { useWorkspace } from "@/lib/use-workspace";
 import { useTimer } from "@/lib/use-timer";
+import { useUserProfile } from "@/lib/use-user-profile";
 import type { ReactNode } from "react";
 import { pages, routeHref } from "@/lib/routes";
 import type { Route } from "@/lib/routes";
@@ -34,6 +34,7 @@ import { TaxesPage } from "@/components/dashboard/pages/taxes";
 import { TimePage } from "@/components/dashboard/pages/time";
 import { ProjectDrawer } from "@/components/dashboard/project-drawer";
 import { WorkspaceModal } from "@/components/dashboard/workspace-modal";
+import { WelcomeProfileModal } from "@/components/dashboard/welcome-profile-modal";
 import type { FormValues, ModalKind, Project } from "@/types/workspace";
 
 export default function DashboardApp({ children }: { children: ReactNode }) {
@@ -57,6 +58,13 @@ export default function DashboardApp({ children }: { children: ReactNode }) {
   const [modal, setModal] = useState<ModalKind | null>(null);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [toast, setToast] = useState("");
+  const {
+    profile,
+    hasSavedProfile,
+    saveProfile,
+    dismissWelcomeWithoutCustomizing,
+    initials,
+  } = useUserProfile();
   useEffect(() => {
     if (!toast) return;
     const timer = window.setTimeout(() => setToast(""), 3000);
@@ -131,7 +139,8 @@ export default function DashboardApp({ children }: { children: ReactNode }) {
         mobileOpen={mobileOpen}
         closeMobile={() => setMobileOpen(false)}
         toggleCollapse={() => setCollapsed((value) => !value)}
-        userName={dashboard.user.firstName}
+        userName={profile.name}
+        userInitials={initials}
       />
       <main id="main-content" className="main-content">
         <header className="topbar">
@@ -147,14 +156,14 @@ export default function DashboardApp({ children }: { children: ReactNode }) {
           </button>
           <div className="greeting">
             {route === "home" ? (
-              <h1>Hello, {dashboard.user.firstName}</h1>
+              <h1>Hello, {profile.firstName}</h1>
             ) : (
               <strong>{currentPage.label}</strong>
             )}
             <p>
               {route === "home"
                 ? "What are you working on?"
-                : "OBLIQ workspace"}
+                : profile.firmName || "OBLIQ workspace"}
             </p>
           </div>
           <div className="search-wrap">
@@ -337,6 +346,15 @@ export default function DashboardApp({ children }: { children: ReactNode }) {
         <div role="status" className="toast">
           {toast}
         </div>
+      )}
+      {!hasSavedProfile && (
+        <WelcomeProfileModal
+          onSave={(values) => {
+            saveProfile(values);
+            setToast(`Welcome to OBLIQ, ${values.name}!`);
+          }}
+          onSkip={dismissWelcomeWithoutCustomizing}
+        />
       )}
     </div>
   );
