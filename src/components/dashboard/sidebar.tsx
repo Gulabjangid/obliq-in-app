@@ -44,6 +44,7 @@ export function Sidebar({
   closeMobile,
   toggleCollapse,
   userName,
+  userInitials,
 }: {
   route: string;
   navigate: Navigate;
@@ -51,6 +52,7 @@ export function Sidebar({
   closeMobile: () => void;
   toggleCollapse: () => void;
   userName: string;
+  userInitials?: string;
 }) {
   return (
     <>
@@ -141,7 +143,7 @@ export function Sidebar({
             }}
           >
             <span className="user-avatar" aria-hidden="true">
-              {initials(userName)}
+              {userInitials ?? initials(userName)}
             </span>
             <span>{userName}</span>
           </Link>
