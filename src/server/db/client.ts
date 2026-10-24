@@ -5,10 +5,25 @@ import * as schema from "./schema";
 
 export type Database = ReturnType<typeof connect>;
 
+function positiveInteger(value: string | undefined, fallback: number) {
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
+}
+
 function connect(url: string) {
   // `prepare: false` keeps queries working behind transaction poolers
   // such as Neon's or Supabase's pooled connection strings.
-  return drizzle(postgres(url, { prepare: false, max: 5 }), { schema });
+  const max = positiveInteger(process.env.DB_POOL_MAX, 1);
+  return drizzle(
+    postgres(url, {
+      prepare: false,
+      max,
+      connect_timeout: 10,
+      idle_timeout: 20,
+      max_lifetime: 300,
+    }),
+    { schema },
+  );
 }
 
 // Reuse one pool per server process, including across dev hot reloads.
