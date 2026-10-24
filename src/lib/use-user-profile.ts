@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { defaultUserProfile } from "@/data/dashboard";
-import { validUserProfile } from "@/lib/storage-validation";
+import { defaultUserProfile } from "../data/dashboard.ts";
+import { validUserProfile } from "./storage-validation.ts";
 import type { UserProfile } from "@/types/workspace";
 
 const STORAGE_KEY = "obliq-preview-user-profile-v1";
