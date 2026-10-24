@@ -104,11 +104,15 @@ export function validUserProfile(value: unknown): value is UserProfile {
   const allowedRoles = ["Owner", "Reviewer / Senior", "Article / Preparer"];
   return (
     typeof item.id === "string" &&
+    item.id.trim().length > 0 &&
     typeof item.name === "string" &&
+    item.name.trim().length > 0 &&
     typeof item.firstName === "string" &&
+    item.firstName.trim().length > 0 &&
     typeof item.role === "string" &&
     allowedRoles.includes(item.role) &&
     typeof item.firmName === "string" &&
+    item.firmName.trim().length > 0 &&
     (item.email === undefined || typeof item.email === "string") &&
     (item.membershipNo === undefined ||
       typeof item.membershipNo === "string") &&
