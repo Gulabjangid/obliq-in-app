@@ -10,6 +10,7 @@ src/
     [section]/page.tsx      Section validation and 404 handling
     api/                    Route handlers: health, workspace, records, time
     globals.css             Stylesheet imports
+  middleware.ts             Auth0 routes and redirect to /login when login is on
   components/
     dashboard-app.tsx       Navigation, search, dialogs, and screen selection
     dashboard/
@@ -36,6 +37,9 @@ src/
     timer-state.ts          Timer snapshot validation, persistence, and duration
     use-timer.ts            Selected project and running or stopped session
     use-dialog.ts           Focus trap, Escape, and focus restoration
+    auth/config.ts          Login switch, public paths, and safe return paths
+    auth/auth0.ts           Auth0 client, created on first use
+    auth/session.ts         Signed-in user as a provider-neutral AuthUser
   styles/                   Base, shell, home, shared UI, pages, dialogs, breakpoints
   server/                   Server code; never import it from a client component
     http.ts                 Session check and JSON errors for route handlers
@@ -131,6 +135,12 @@ setup and Next server startup out of the concurrent unit-test pass.
 4. Add tests for input and mapping. They run without a database.
 
 Keep credentials on the server and never put secrets in `NEXT_PUBLIC_*` variables. The database client, session, route helper, and services import `server-only`, so importing them from a client component fails the build. When collections become large, fetch and paginate them by screen rather than loading every record.
+
+## Login
+
+Login is behind `AUTH_ENABLED` and off by default. When it is on, `middleware.ts` lets the Auth0 SDK handle `/auth/login`, `/auth/logout` and `/auth/callback`, and sends signed-out visitors to `/login?returnTo=<path>`. Return paths are limited to paths on this site.
+
+Server code reads the signed-in person with `getAuthUser()`, which returns `{ provider, providerUserId, email, name }` and no Auth0 types. `provider` and `providerUserId` are the key of the backend's `user_identities` table, so a different provider only needs a new `getAuthUser()`.
 
 ## Working rules
 
