@@ -80,3 +80,20 @@ test("shows the viewer's own activity as You", () => {
     "A former member",
   );
 });
+
+test("sends the activity timestamp so the dashboard can label it", () => {
+  const item = toActivityItem(
+    {
+      id: "a",
+      userId: "u1",
+      person: "Naman",
+      action: "created a project",
+      subject: "Audit",
+      type: "new",
+      createdAt: new Date("2026-10-04T10:00:00Z"),
+    },
+    "u1",
+    new Date("2026-10-04T12:00:00Z"),
+  );
+  assert.equal(item.createdAt, "2026-10-04T10:00:00.000Z");
+});

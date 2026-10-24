@@ -1,6 +1,6 @@
-# Firm invitations — issue #12 draft slice
+# Firm invitations — issue #12 backend slice
 
-This backend slice builds on PR #14. Owners can issue, list, and revoke expiring,
+This backend slice uses the foundation merged in PR #14. Owners can issue, list, and revoke expiring,
 single-use invitations for internal Reviewer/Senior (`reviewer`) or
 Article/Preparer (`article_assistant`) membership. The existing stored assistant
 value is preserved. It does not define the broader role permission matrix.

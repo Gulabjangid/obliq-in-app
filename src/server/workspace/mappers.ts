@@ -48,6 +48,7 @@ export function toActivityItem(
     action: row.action,
     subject: row.subject,
     time: relativeTime(row.createdAt, now),
+    createdAt: row.createdAt.toISOString(),
     type: row.type,
   };
 }

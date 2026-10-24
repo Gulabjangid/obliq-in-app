@@ -7,7 +7,10 @@ import process from "node:process";
 const testPattern = "tests/**/*.test.mjs";
 
 // Synchronous file discovery and zero tests handling
-const files = globSync(testPattern);
+// Database integration has its own command/runtime and CI step (test:db).
+const files = globSync(testPattern).filter(
+  (file) => !file.replaceAll("\\", "/").startsWith("tests/integration/"),
+);
 if (files.length === 0) {
   console.error(
     `\x1b[31m[Test Runner] No test files matched "${testPattern}".\x1b[0m`,
