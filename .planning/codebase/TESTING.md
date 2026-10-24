@@ -1,6 +1,7 @@
 # Testing Strategy & Guidelines
 
 ## Overview
+
 OBLIQ-in uses the native Node.js test runner (`node:test`) and reporter (`node:test/reporters`), eliminating heavyweight external test runners (such as Jest or Vitest) to keep dependencies lean and test execution fast.
 
 ## Test Directory Structure
@@ -27,40 +28,53 @@ tests/
 ## Running Tests
 
 ### 1. Fast Non-Database Suite (Default)
+
 Runs all client and server unit tests concurrently:
+
 ```bash
 npm test
 ```
-*Note: Automatically skips `tests/integration/`.*
+
+_Note: Automatically skips `tests/integration/`._
 
 ### 2. Client Tests Only
+
 ```bash
 npm run test:client
 ```
 
 ### 3. Server Tests Only
+
 ```bash
 npm run test:server
 ```
 
 ### 4. Database Integration Tests
+
 Requires a dedicated, disposable PostgreSQL test database ending in `_test`:
+
 ```bash
 $env:TEST_DATABASE_URL="postgres://obliq:obliq@127.0.0.1:5433/obliq_test"
 npm run test:db
 ```
+
 The integration suite tests:
+
 - Base-to-follow-up schema migrations
 - Tenant isolation and role permissions
 - Concurrency locks during invitation redemption
 - Transactional rollback on injected audit failures
 
 ### 5. Complete CI Check
+
 To reproduce the full GitHub Actions CI pipeline locally:
+
 ```bash
 npm run check
 ```
+
 Runs:
+
 1. `npm run format:check`
 2. `npm run lint`
 3. `npm run typecheck`

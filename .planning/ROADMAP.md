@@ -3,6 +3,7 @@
 ## Milestone 1: Core Foundation & Team Workspace (Current)
 
 ### Phase 1: Authentication & User Onboarding
+
 - **Goal**: Transition from dev stub to production-grade authentication with guided onboarding.
 - **Tasks**:
   - [ ] Connect Auth0 / OAuth provider in `src/server/auth/session.ts` (Issue #10)
@@ -11,6 +12,7 @@
 - **Verification**: New users can log in, choose account role, create firm, and populate session correctly.
 
 ### Phase 2: Team Invitation & Role Management UI
+
 - **Goal**: Expose firm invitations backend in the frontend Settings/Team screens.
 - **Tasks**:
   - [ ] Build Team tab in Settings screen ([src/components/dashboard/pages/settings.tsx](file:///e:/Open%20Source/Obliq-in-app/src/components/dashboard/pages/settings.tsx)) (Issue #13)
@@ -20,6 +22,7 @@
 - **Verification**: Firm owner can generate invite link, an invitee can redeem it in browser, and member list updates instantly.
 
 ### Phase 3: Form ID Upgrades & Live Metrics
+
 - **Goal**: Clean up technical debt from MVP v1.
 - **Tasks**:
   - [ ] Refactor creation modals to pass client/project UUIDs rather than names (Issue #7)
@@ -32,6 +35,7 @@
 ## Milestone 2: Document Vault & OCR Pipeline (Upcoming)
 
 ### Phase 4: Document Storage & Client Upload Workspace
+
 - **Goal**: Enable direct file uploads for bills, invoices, and challans.
 - **Tasks**:
   - [ ] Set up secure cloud object storage (S3-compatible / R2 / GCS) with signed URLs
@@ -39,6 +43,7 @@
   - [ ] Implement document versioning and audit trail
 
 ### Phase 5: Revenue-Register OCR Extraction Engine
+
 - **Goal**: Automate financial data extraction with source verification.
 - **Tasks**:
   - [ ] Ingest invoices/receipts and trigger OCR worker
