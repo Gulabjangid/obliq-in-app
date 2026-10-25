@@ -1,0 +1,5 @@
+# CODEOWNERS for OBLIQ-in application
+# Enforces required security and maintainer reviews for critical authentication and workspace paths (Issue #71)
+
+/src/server/auth/      @Naman-iitm @Shivansh1205 @Paras-ydv @AdeshDeshmukh @riyashikanedunchezhian-lgtm @abhirajadhikary06 @Jethin10 @ahana4banerjee @Sahas2711 @SarthakPatil18 @jhaabhijeet864
+/src/server/workspace/ @Naman-iitm @Shivansh1205 @Paras-ydv @AdeshDeshmukh @riyashikanedunchezhian-lgtm @abhirajadhikary06 @Jethin10 @ahana4banerjee @Sahas2711 @SarthakPatil18 @jhaabhijeet864
