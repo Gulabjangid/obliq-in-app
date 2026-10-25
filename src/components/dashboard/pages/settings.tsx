@@ -1,10 +1,25 @@
-import { PageHeading } from "@/components/dashboard/ui";
-import { dashboard } from "@/data/dashboard";
+"use client";
 
-// Read-only for now. The name, firm and role come from sample data until
-// login and the firm profile exist.
-export function SettingsPage() {
-  const owner = dashboard.team[0];
+import { useState } from "react";
+import { Edit3 } from "lucide-react";
+import { PageHeading } from "@/components/dashboard/ui";
+import { EditProfileModal } from "@/components/dashboard/edit-profile-modal";
+import { useUserProfile } from "@/lib/use-user-profile";
+import type { UserProfile } from "@/types/workspace";
+
+export function SettingsPage({
+  profile: propProfile,
+  onUpdateProfile,
+}: {
+  profile?: UserProfile;
+  onUpdateProfile?: (updates: Partial<UserProfile>) => void;
+}) {
+  const { profile: hookProfile, saveProfile: hookSave } = useUserProfile();
+  const [editing, setEditing] = useState(false);
+
+  const activeProfile = propProfile ?? hookProfile;
+  const handleSave = onUpdateProfile ?? hookSave;
+
   return (
     <>
       <PageHeading eyebrow="ACCOUNT" title="Profile & settings" />
@@ -12,21 +27,54 @@ export function SettingsPage() {
         <dl>
           <div>
             <dt>Name</dt>
-            <dd>{owner.name}</dd>
+            <dd>{activeProfile.name}</dd>
           </div>
           <div>
             <dt>Role</dt>
-            <dd>{owner.role}</dd>
+            <dd>{activeProfile.role}</dd>
           </div>
           <div>
             <dt>Workspace</dt>
-            <dd>OBLIQ workspace</dd>
+            <dd>{activeProfile.firmName}</dd>
           </div>
+          {activeProfile.membershipNo && (
+            <div>
+              <dt>ICAI Membership No.</dt>
+              <dd>{activeProfile.membershipNo}</dd>
+            </div>
+          )}
+          {activeProfile.email && (
+            <div>
+              <dt>Email</dt>
+              <dd>{activeProfile.email}</dd>
+            </div>
+          )}
+          {activeProfile.phone && (
+            <div>
+              <dt>Phone</dt>
+              <dd>{activeProfile.phone}</dd>
+            </div>
+          )}
         </dl>
-        <p className="modal-note">
-          Editing your profile will be available after login is added.
-        </p>
+        <div style={{ marginTop: "18px" }}>
+          <button
+            type="button"
+            className="secondary-button"
+            onClick={() => setEditing(true)}
+          >
+            <Edit3 size={15} />
+            <span>Edit profile</span>
+          </button>
+        </div>
       </section>
+
+      {editing && (
+        <EditProfileModal
+          profile={activeProfile}
+          onSave={handleSave}
+          close={() => setEditing(false)}
+        />
+      )}
     </>
   );
 }

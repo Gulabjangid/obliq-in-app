@@ -1,0 +1,100 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: "Version tag (e.g. v0.2.0)"
+        required: true
+        type: string
+      draft:
+        description: "Create as draft release"
+        required: false
+        type: boolean
+        default: false
+      prerelease:
+        description: "Mark as prerelease"
+        required: false
+        type: boolean
+        default: false
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+  issues: read
+  pull-requests: read
+
+jobs:
+  verify:
+    name: Verify Quality Gate & Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run verification checks (format, lint, typecheck, tests, build)
+        run: npm run check
+
+  release:
+    name: Create GitHub Release
+    needs: verify
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Determine tag name
+        id: vars
+        run: |
+          if [ -n "${{ github.event.inputs.tag_name }}" ]; then
+            TAG="${{ github.event.inputs.tag_name }}"
+          else
+            TAG="${GITHUB_REF#refs/tags/}"
+          fi
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+
+      - name: Generate Release Notes & Contributor Spotlight
+        id: notes
+        run: |
+          node .github/scripts/generate-release-notes.mjs --tag "${{ steps.vars.outputs.tag }}" --output release-notes.md
+
+      - name: Publish GitHub Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG_NAME: ${{ steps.vars.outputs.tag }}
+          IS_DRAFT: ${{ github.event.inputs.draft || 'false' }}
+          IS_PRERELEASE: ${{ github.event.inputs.prerelease || 'false' }}
+        run: |
+          FLAGS=""
+          if [ "$IS_DRAFT" = "true" ]; then
+            FLAGS="$FLAGS --draft"
+          fi
+          if [ "$IS_PRERELEASE" = "true" ]; then
+            FLAGS="$FLAGS --prerelease"
+          fi
+          gh release create "$TAG_NAME" \
+            --title "Release $TAG_NAME" \
+            --notes-file release-notes.md \
+            $FLAGS

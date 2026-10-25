@@ -1,0 +1,41 @@
+changelog:
+  exclude:
+    labels:
+      - ignore-for-release
+      - duplicate
+      - invalid
+      - wontfix
+    authors:
+      - dependabot[bot]
+      - github-actions[bot]
+  categories:
+    - title: "🚀 Features & Enhancements"
+      labels:
+        - feature
+        - enhancement
+        - feat
+        - v1-frontend
+        - v1-workspace
+    - title: "🐛 Bug Fixes & Reliability"
+      labels:
+        - bug
+        - fix
+        - regression
+    - title: "🛡️ Security & Backend Architecture"
+      labels:
+        - security
+        - backend
+        - v1-storage
+    - title: "📚 Documentation & Community"
+      labels:
+        - documentation
+        - docs
+    - title: "⚙️ CI, Tooling & Automation"
+      labels:
+        - ci
+        - dependencies
+        - tooling
+        - chore
+        - test
+        - tests
+        - "*"

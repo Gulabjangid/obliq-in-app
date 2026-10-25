@@ -6,6 +6,7 @@ import type {
   Metric,
   Project,
   TeamMember,
+  UserProfile,
 } from "@/types/workspace";
 
 type DashboardData = {
@@ -21,12 +22,29 @@ type DashboardData = {
   activity: ActivityItem[];
 };
 
+// Default profile fixtures for local preview
+export const defaultUserProfile: UserProfile = {
+  id: "USR-01",
+  name: "CA Partner",
+  firstName: "Partner",
+  role: "Owner",
+  firmName: "OBLIQ Workspace",
+  email: "",
+  membershipNo: "",
+  phone: "",
+  isCustomized: false,
+};
+
 // Static fixtures for the local preview.
 export const dashboard = {
-  user: { firstName: "Naman" },
+  user: { firstName: defaultUserProfile.firstName },
   // Stands in for the firm's members until roles and invites exist.
   team: [
-    { id: "TM-01", name: "Naman Kumar", role: "Owner" },
+    {
+      id: "TM-01",
+      name: defaultUserProfile.name,
+      role: defaultUserProfile.role,
+    },
     { id: "TM-02", name: "Riyashika Das", role: "Reviewer / Senior" },
     { id: "TM-03", name: "Sukrut Pawar", role: "Article / Preparer" },
   ],
