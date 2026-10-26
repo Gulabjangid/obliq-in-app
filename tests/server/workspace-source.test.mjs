@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { createLocalWorkspace } from "../../src/lib/workspace-source.ts";
+import { createLocalWorkspace } from "../../src/lib/local-workspace-source.ts";
 
 const values = {
   title: "Audit",
@@ -18,7 +18,9 @@ test("loads persisted drafts in a new source instance", async () => {
     setItem: (key, value) => records.set(key, value),
   };
   const source = createLocalWorkspace(() => storage);
-  await source.load();
+  const initial = await source.load();
+  assert.equal(initial.syntheticData, true);
+  assert.ok(initial.team.length > 0);
   const saved = await source.create("invoice", values);
   const reloaded = await createLocalWorkspace(() => storage).load();
   assert.deepEqual(reloaded.invoices, saved.invoices);

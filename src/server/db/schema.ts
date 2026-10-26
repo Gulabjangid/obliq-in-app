@@ -2,6 +2,7 @@ import { sql } from "drizzle-orm";
 import {
   check,
   date,
+  boolean,
   index,
   integer,
   numeric,
@@ -97,6 +98,7 @@ export const userIdentities = pgTable(
 export const firms = pgTable("firms", {
   id: id(),
   name: text("name").notNull(),
+  isSynthetic: boolean("is_synthetic").notNull().default(false),
   createdBy: uuid("created_by")
     .notNull()
     .references(() => users.id),

@@ -84,6 +84,11 @@ export type TimeEntry = {
   seconds: number;
 };
 
+export type TrackedHoursPoint = {
+  label: string;
+  hours: number;
+};
+
 export type ModalKind =
   "invoice" | "proposal" | "contract" | "form" | "project" | "client";
 
@@ -102,7 +107,11 @@ export type WorkspaceData = {
   invoices: Invoice[];
   documents: Document[];
   activity: ActivityItem[];
+  team: TeamMember[];
   entries: TimeEntry[];
+  monthlyTrackedHours: TrackedHoursPoint[];
+  yearlyTrackedHours: TrackedHoursPoint[];
+  syntheticData: boolean;
 };
 
 // API adapters return the records accepted by the existing screens.
