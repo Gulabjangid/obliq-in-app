@@ -60,12 +60,15 @@ export function useUserProfile() {
   const [profileState, setProfileState] = useState<{
     profile: UserProfile;
     hasSavedProfile: boolean;
-  }>(readStoredProfile);
+  }>({ profile: defaultUserProfile, hasSavedProfile: false });
+  const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
     function sync() {
       setProfileState(readStoredProfile());
     }
+    sync();
+    setHydrated(true);
     window.addEventListener(PROFILE_EVENT, sync);
     window.addEventListener("storage", sync);
     return () => {
@@ -114,6 +117,7 @@ export function useUserProfile() {
   return {
     profile: profileState.profile,
     hasSavedProfile: profileState.hasSavedProfile,
+    hydrated,
     saveProfile,
     dismissWelcomeWithoutCustomizing,
     initials: extractInitials(profileState.profile.name),
