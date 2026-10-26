@@ -1,7 +1,7 @@
 import "server-only";
 import { ZodError } from "zod";
 import { getSession, hasFirm, type FirmSession } from "./auth/session";
-import { InputError } from "./workspace/service";
+import { ConflictError, InputError } from "./workspace/service";
 
 type Handler = (session: FirmSession, request: Request) => Promise<unknown>;
 
@@ -33,6 +33,8 @@ export function route(handler: Handler, status = 200) {
         return Response.json({ error: "Invalid JSON" }, { status: 400 });
       if (error instanceof InputError)
         return Response.json({ error: error.message }, { status: 400 });
+      if (error instanceof ConflictError)
+        return Response.json({ error: error.message }, { status: 409 });
       console.error(error);
       return Response.json({ error: "Something went wrong" }, { status: 500 });
     }
