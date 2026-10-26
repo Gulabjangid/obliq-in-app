@@ -2,14 +2,17 @@ import { sql } from "drizzle-orm";
 import {
   check,
   date,
+  foreignKey,
   index,
   integer,
+  jsonb,
   numeric,
   pgEnum,
   pgTable,
   primaryKey,
   text,
   timestamp,
+  unique,
   uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
@@ -17,6 +20,7 @@ import {
 // Enum values match the strings the screens filter on, so rows map to the
 // frontend types without translation.
 export const userType = pgEnum("user_type", ["client", "firm"]);
+// Roles and what each can do are defined in #29.
 export const memberRole = pgEnum("member_role", [
   "owner",
   "article_assistant",
@@ -44,6 +48,25 @@ export const documentStatus = pgEnum("document_status", [
   "Draft",
   "In review",
   "Ready",
+]);
+// Draft until work starts; Archived engagements are read-only.
+export const engagementStatus = pgEnum("engagement_status", [
+  "Draft",
+  "Active",
+  "Review",
+  "Complete",
+  "Archived",
+]);
+export const engagementType = pgEnum("engagement_type", [
+  "Statutory audit",
+  "Tax audit",
+  "Internal audit",
+  "Other",
+]);
+// The firm's own workspace, and later the client-share one (#33).
+export const workspaceKind = pgEnum("workspace_kind", [
+  "internal",
+  "client_share",
 ]);
 export const activityType = pgEnum("activity_type", [
   "new",
@@ -165,6 +188,8 @@ export const clients = pgTable(
       table.firmId,
       sql`lower(${table.name})`,
     ),
+    // Lets other tables require that their client is in the same firm.
+    unique("clients_firm_id_key").on(table.firmId, table.id),
   ],
 );
 
@@ -264,4 +289,108 @@ export const activity = pgTable(
     createdAt: createdAt(),
   },
   (table) => [index("activity_firm_idx").on(table.firmId, table.createdAt)],
+);
+
+// An audit engagement for one client and financial year (#30). Working papers,
+// evidence and client-share links all belong to an engagement.
+export const engagements = pgTable(
+  "engagements",
+  {
+    id: id(),
+    firmId: firmId(),
+    clientId: uuid("client_id").notNull(),
+    title: text("title").notNull(),
+    // Indian financial year, e.g. "2025-26".
+    financialYear: text("financial_year").notNull(),
+    type: engagementType("type").notNull(),
+    status: engagementStatus("status").notNull().default("Draft"),
+    reviewerId: uuid("reviewer_id").notNull(),
+    createdBy: uuid("created_by")
+      .notNull()
+      .references(() => users.id),
+    createdAt: createdAt(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("engagements_firm_idx").on(table.firmId),
+    index("engagements_reviewer_idx").on(table.reviewerId),
+    uniqueIndex("engagements_client_year_title_idx").on(
+      table.clientId,
+      table.financialYear,
+      sql`lower(${table.title})`,
+    ),
+    unique("engagements_firm_id_key").on(table.firmId, table.id),
+    // The client and the reviewer must be in the engagement's firm. The
+    // database rejects anything else, not only the code.
+    foreignKey({
+      name: "engagements_client_fk",
+      columns: [table.firmId, table.clientId],
+      foreignColumns: [clients.firmId, clients.id],
+    }),
+    foreignKey({
+      name: "engagements_reviewer_fk",
+      columns: [table.firmId, table.reviewerId],
+      foreignColumns: [firmMembers.firmId, firmMembers.userId],
+    }),
+  ],
+);
+
+export const engagementWorkspaces = pgTable(
+  "engagement_workspaces",
+  {
+    id: id(),
+    firmId: firmId(),
+    engagementId: uuid("engagement_id").notNull(),
+    kind: workspaceKind("kind").notNull(),
+    createdAt: createdAt(),
+  },
+  (table) => [
+    foreignKey({
+      name: "engagement_workspaces_engagement_fk",
+      columns: [table.firmId, table.engagementId],
+      foreignColumns: [engagements.firmId, engagements.id],
+    }).onDelete("cascade"),
+    // Exactly one internal workspace per engagement.
+    uniqueIndex("engagement_workspaces_internal_idx")
+      .on(table.engagementId)
+      .where(sql`${table.kind} = 'internal'`),
+  ],
+);
+
+// Who did what, for the audit trail. Append-only: a trigger in the migration
+// rejects UPDATE and DELETE, so rows can't be changed after the fact. Unlike
+// `activity`, this is not a feed and is never trimmed.
+export const auditEvents = pgTable(
+  "audit_events",
+  {
+    id: id(),
+    // No cascade: a firm with audit history can't be deleted by accident.
+    firmId: uuid("firm_id")
+      .notNull()
+      .references(() => firms.id),
+    engagementId: uuid("engagement_id"),
+    actorUserId: uuid("actor_user_id")
+      .notNull()
+      .references(() => users.id),
+    // Dotted names such as `engagement.created`, as in #49.
+    action: text("action").notNull(),
+    entityType: text("entity_type").notNull(),
+    entityId: uuid("entity_id").notNull(),
+    details: jsonb("details").$type<Record<string, unknown>>(),
+    createdAt: createdAt(),
+  },
+  (table) => [
+    index("audit_events_firm_idx").on(table.firmId, table.createdAt),
+    index("audit_events_engagement_idx").on(
+      table.engagementId,
+      table.createdAt,
+    ),
+    foreignKey({
+      name: "audit_events_engagement_fk",
+      columns: [table.firmId, table.engagementId],
+      foreignColumns: [engagements.firmId, engagements.id],
+    }),
+  ],
 );
