@@ -61,6 +61,7 @@ export default function DashboardApp({ children }: { children: ReactNode }) {
   const {
     profile,
     hasSavedProfile,
+    hydrated,
     saveProfile,
     dismissWelcomeWithoutCustomizing,
     initials,
@@ -347,7 +348,7 @@ export default function DashboardApp({ children }: { children: ReactNode }) {
           {toast}
         </div>
       )}
-      {!hasSavedProfile && (
+      {hydrated && !hasSavedProfile && (
         <WelcomeProfileModal
           onSave={(values) => {
             saveProfile(values);
