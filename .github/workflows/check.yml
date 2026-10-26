@@ -19,6 +19,21 @@ jobs:
     runs-on: ubuntu-latest
     env:
       HUSKY: "0"
+      DATABASE_URL: postgres://obliq:obliq@127.0.0.1:5432/obliq_test
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: obliq
+          POSTGRES_PASSWORD: obliq
+          POSTGRES_DB: obliq_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U obliq -d obliq_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -31,6 +46,9 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Apply database migrations
+        run: npm run db:migrate
 
       - name: Check code formatting (Prettier)
         run: npm run format:check
@@ -46,7 +64,7 @@ jobs:
           npm run db:generate
           git diff --exit-code drizzle/
 
-      - name: Run non-database test suite (Client & Server)
+      - name: Run test suite (Client & Server, workspace isolation on PostgreSQL)
         run: npm test
 
       - name: Restore Next.js build cache

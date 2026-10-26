@@ -23,6 +23,8 @@ npm run check
 
 This runs Prettier, ESLint, TypeScript, tests, and the production build. Husky runs formatting on staged files, linting, type checking, and tests before commits.
 
+The server tests include workspace isolation checks that need Postgres. They skip with a message when `DATABASE_URL` is not set; CI runs them against a database.
+
 ## Backend
 
 The backend is in this app: Next.js route handlers under `src/app/api` and server code under `src/server`, with Postgres and [Drizzle ORM](https://orm.drizzle.team/). It needs Docker, or any Postgres 15+ database.

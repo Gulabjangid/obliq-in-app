@@ -66,6 +66,8 @@ tests/
     storage-validation.test.mjs
     workspace-input.test.mjs
     workspace-source.test.mjs
+    workspace-isolation.test.mjs
+    helpers/                Loader for server-only and extensionless .ts imports
 ```
 
 The root layout keeps the dashboard mounted across routes. Route pages validate the URL; the dashboard selects the corresponding screen from the pathname. Unknown sections render Next.js's 404 page. This lets the v1 timer continue during navigation without a context provider or state library.
@@ -140,6 +142,7 @@ setup and Next server startup out of the concurrent unit-test pass.
 2. Add `src/app/api/<area>/route.ts` that exports `GET` or `POST = route(...)`.
 3. Change the schema only in `db/schema.ts`, then run `npm run db:generate` and commit the SQL file.
 4. Add tests for input and mapping. They run without a database.
+5. Extend `tests/server/workspace-isolation.test.mjs` when the endpoint reads or writes firm data. It runs against Postgres when `DATABASE_URL` is set and skips otherwise.
 
 Keep credentials on the server and never put secrets in `NEXT_PUBLIC_*` variables. The database client, session, route helper, and services import `server-only`, so importing them from a client component fails the build. When collections become large, fetch and paginate them by screen rather than loading every record.
 
