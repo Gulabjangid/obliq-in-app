@@ -15,8 +15,9 @@ test(
     const { eq, inArray } = await import("drizzle-orm");
     const { getDb } = await import("../../src/server/db/client.ts");
     const schema = await import("../../src/server/db/schema.ts");
-    const { InputError, createRecord, loadWorkspace, saveTime } =
+    const { createRecord, loadWorkspace, saveTime } =
       await import("../../src/server/workspace/service.ts");
+    const { InputError } = await import("../../src/server/errors.ts");
 
     const db = getDb();
     const emails = ["iso-owner-a@example.test", "iso-owner-b@example.test"];
