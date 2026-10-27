@@ -117,6 +117,11 @@ test(
         firmB.id,
         "Shared Name Client",
       );
+      const alphaOnlyId = fixtureId(
+        seededClients,
+        firmA.id,
+        "Alpha Only Client",
+      );
 
       await db.insert(schema.projects).values([
         {
@@ -294,7 +299,7 @@ test(
               kind: "project",
               values: {
                 title: "Sneaky Project",
-                client: "Alpha Only Client",
+                clientId: alphaOnlyId,
                 due: "2026-12-01",
               },
             }),
@@ -305,7 +310,7 @@ test(
               kind: "invoice",
               values: {
                 title: "Sneaky Invoice",
-                client: "Alpha Only Client",
+                clientId: alphaOnlyId,
                 amount: 100,
                 due: "2026-12-01",
               },
@@ -317,13 +322,13 @@ test(
               kind: "contract",
               values: {
                 title: "Sneaky Contract",
-                client: "Alpha Only Client",
+                clientId: alphaOnlyId,
               },
             }),
             "Unknown client",
           );
           await rejectsInput(
-            saveTime(sessionB, { project: "Alpha Project", seconds: 60 }),
+            saveTime(sessionB, { projectId: projectAId, seconds: 60 }),
             "Unknown project",
           );
 
@@ -359,7 +364,7 @@ test(
             kind: "project",
             values: {
               title: "Alpha New Project",
-              client: "Shared Name Client",
+              clientId: sharedAId,
               due: "2026-12-01",
             },
           });
